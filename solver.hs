@@ -7,6 +7,7 @@ import Control.Monad.State.Lazy
 import GHC.IO.Encoding
 import Data.Attoparsec.ByteString.Char8 as AP
 import qualified Data.ByteString as DB
+import Debug.Trace as DT
 
 ---------------------Data constructors----------------------------------------------
 data DTMC = DTMC {
@@ -50,9 +51,9 @@ testDTMC = DTMC testMatrix testVector
 
 testCall :: Int -> IO ()
 testCall n
-    | n == 0 = putStrLn "that was it"
+    | n == 0 = putStrLn "this is a test string"
     | otherwise = do
-        putStrLn "yoyoyo"
+        putStrLn "this is another test string"
         testCall (n-1)
 
 ---------------------Building DTMC from parsed contents-----------------------------
@@ -97,13 +98,14 @@ testIter = do
 
 vIter :: Int -> StateT DTMC IO()
 vIter n
-    | n == 0 = do
+    | DT.trace ("n==0 comparison, n is currently: " ++ show n ++ ".\n") (n == 0) = do
         dtmc <- get
         liftIO $ print (v dtmc)
     | otherwise = do
         dtmc <- fmap (runState iter) get
-        liftIO $ print dtmc
-        vIter (n-1)
+        put (snd dtmc)
+        DT.trace "Here, the current value of dtmc should be displayed:" (liftIO $ print dtmc)
+        DT.trace ("vIter is called recursively with " ++ show (n-1) ++ ".\n") (vIter (n-1))
 
 ---------------------Main-----------------------------------------------------------
 main = do
@@ -116,10 +118,11 @@ main = do
     --putStrLn "Enable verbose output? (y/N)"
     --v <- getChar
     contents <- DB.readFile "example.txt"
-    let parsedStuff = parseOnly dtmcParse contents
-    return $ fmap (runStateT (vIter 10)) parsedStuff 
-    --return $ fmap (runStateT testIter) parsedStuff
-    --return $ fmap (nIterV 0 10) parsedStuff
+    let dtmc = parseOnly dtmcParse contents
+    --return $ runStateT (vIter 10) testDTMC
+    return $ fmap (runStateT (vIter 10)) dtmc
+    --return $ fmap (runStateT testIter) dtmc
+    --return $ fmap (nIterV 0 10) dtmc
     
     --return $ fmap (nIterV 0 (read n)) (parseOnly dtmcParse contents)
     -- if v == 'y' then do
