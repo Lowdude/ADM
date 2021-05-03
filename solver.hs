@@ -9,7 +9,11 @@ import Data.Attoparsec.ByteString.Char8 as AP
 import qualified Data.ByteString as DB
 
 ---------------------Data constructors----------------------------------------------
-data DTMC = DTMC (Matrix Double) (Matrix Double)
+data DTMC = DTMC {
+    m :: Matrix Double
+    , v :: Matrix Double
+}
+
 data Transition = Transition {
     start :: Int 
     , end :: Int 
@@ -72,22 +76,17 @@ normalise n m
     | otherwise = normalise (n+1) $ setElem (1 - V.sum (getRow n m)) (n,n) m
 
 ---------------------Calculating n steps of DTMC------------------------------------
-iter :: DTMC -> DTMC
-iter (DTMC m v) = DTMC m (multStd2 v m)
+iter :: State DTMC (Matrix Double)
+iter = do
+    dtmc <- get
+    put $ DTMC (m dtmc) (multStd2 (v dtmc) (m dtmc))
+    v <$> get
 
-nIter :: Int -> DTMC -> DTMC
-nIter n d
-    | n == 0 = d
-    | otherwise = nIter (n-1) (iter d)
+-- nIter :: Int -> DTMC -> DTMC
+-- nIter n d
+--     | n == 0 = d
+--     | otherwise = nIter (n-1) (runState iter d)
 
---nIterV :: Int -> Int -> DTMC -> IO DTMC
-nIterV c n (DTMC m v) = do
-    putStrLn ("Step " ++ show c ++ ": " ++ show v)
-    if n==0 then do return (DTMC m v)
-    else do nIterV (c+1) (n-1) (iter (DTMC m v))
-
---instance Show (IO DTMC) where
---    show _ = " asd "
 
 ---------------------Main-----------------------------------------------------------
 main = do
@@ -101,7 +100,8 @@ main = do
     --v <- getChar
     contents <- DB.readFile "example.txt"
     let parsedStuff = parseOnly dtmcParse contents
-    print $ fmap (nIterV 0 10) parsedStuff
+    return $ fmap (runState iter) parsedStuff
+    --return $ fmap (nIterV 0 10) parsedStuff
     
     --return $ fmap (nIterV 0 (read n)) (parseOnly dtmcParse contents)
     -- if v == 'y' then do
