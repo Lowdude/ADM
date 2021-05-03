@@ -95,12 +95,14 @@ testIter = do
     put $ DTMC (m dtmc) (multStd2 (v dtmc) (m dtmc))
     liftIO $ print (v dtmc) --print dtmc
 
-vIter :: Int -> State DTMC (IO())
+vIter :: Int -> StateT DTMC IO()
 vIter n
-    | n == 0 = do print <$> get
-    | otherwise = do
-        iter
+    | n == 0 = do
         dtmc <- get
+        liftIO $ print (v dtmc)
+    | otherwise = do
+        dtmc <- fmap (runState iter) get
+        liftIO $ print dtmc
         vIter (n-1)
 
 ---------------------Main-----------------------------------------------------------
@@ -115,8 +117,8 @@ main = do
     --v <- getChar
     contents <- DB.readFile "example.txt"
     let parsedStuff = parseOnly dtmcParse contents
-    --return $ fmap (runState (vIter 10)) parsedStuff
-    return $ fmap (runStateT testIter) parsedStuff
+    return $ fmap (runStateT (vIter 10)) parsedStuff 
+    --return $ fmap (runStateT testIter) parsedStuff
     --return $ fmap (nIterV 0 10) parsedStuff
     
     --return $ fmap (nIterV 0 (read n)) (parseOnly dtmcParse contents)
