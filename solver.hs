@@ -2,13 +2,26 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import Data.Matrix
+    ( fromLists, getRow, multStd2, setElem, zero, Matrix(nrows) )
 import qualified Data.Vector as V
 import Control.Monad.State.Lazy
-import GHC.IO.Encoding
+    ( evalStateT,
+      runState,
+      MonadIO(liftIO),
+      MonadState(put, get),
+      State,
+      StateT )
+import GHC.IO.Encoding ( setLocaleEncoding, utf8 )
 import Data.Attoparsec.ByteString.Char8 as AP
+    ( decimal,
+      double,
+      space,
+      endOfLine,
+      parseOnly,
+      manyTill,
+      endOfInput,
+      Parser )
 import qualified Data.ByteString as DB
-import Debug.Trace as DT
-import Data.Either
 
 ---------------------Data constructors----------------------------------------------
 data DTMC = DTMC {
@@ -95,7 +108,7 @@ testIter :: StateT DTMC IO ()
 testIter = do
     dtmc <- get
     put $ DTMC (m dtmc) (multStd2 (v dtmc) (m dtmc))
-    liftIO $ print (v dtmc) --print dtmc
+    liftIO $ print (v dtmc)
 
 vIter :: Int -> StateT DTMC IO()
 vIter n
@@ -105,43 +118,28 @@ vIter n
     | otherwise = do
         dtmc <- fmap (runState iter) get
         put (snd dtmc)
-        liftIO $ print dtmc
+        liftIO $ print (v (snd dtmc))
         vIter (n-1)
 
 ---------------------Main-----------------------------------------------------------
 main = do
     setLocaleEncoding utf8
-    -- putStrLn "Enter the name of DTMC file"
-    -- file <- getLine 
-    -- contents <- DB.readFile file
-    -- putStrLn "How many iterations do you want to run?"
-    -- n <- getLine
-    --putStrLn "Enable verbose output? (y/N)"
-    --v <- getChar
-    contents <- DB.readFile "unfairGamble.txt"
+    putStrLn "Enter the name of DTMC file"
+    file <- getLine 
+    contents <- DB.readFile file
+    putStrLn "How many iterations do you want to run?"
+    n <- getLine
+    putStrLn "Enable verbose output? (y/N)"
+    v <- getChar
     let dtmc = parseOnly dtmcParse contents
-    --runStateT (vIter 10) testDTMC
-    --print $ fmap (runStateT (vIter 10)) dtmc
-    --runStateT (vIter 10) testDTMC
-    either
-        (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC")
-        (\msg -> evalStateT (vIter 10) testDTMC)
-        dtmc
     
-    -- case fmap (runStateT (vIter 10)) dtmc of
-    --     Left err -> putStrLn "There was an issue with the input file: Not a valid DTMC"
-    --     Right msg -> print $ runStateT (vIter 10) (Right msg)
-
-    --runStateT (vIter 10) (fromRight testDTMC dtmc)
-    --return $ fmap (runStateT testIter) dtmc
-    --return $ fmap (nIterV 0 10) dtmc
-
-    --return $ fmap (nIterV 0 (read n)) (parseOnly dtmcParse contents)
-    -- if v == 'y' then do
-    --     return $ fmap (nIterV (read n)) (parseOnly dtmcParse contents)
-    -- else do
-    --     return $ fmap (nIterV (read n)) (parseOnly dtmcParse contents)
-    --print $ fmap (nIter (read n)) (parseOnly dtmcParse contents)
+    if v == 'y' then do
+        either
+            (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC")
+            (\msg -> evalStateT (vIter 10) testDTMC)
+            dtmc
+    else do
+        print $ evalStateT (nIter 10) testDTMC
 
 
 ---------------------Comments regarding the input format----------------------------
