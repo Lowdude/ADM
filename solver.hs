@@ -97,18 +97,16 @@ iter = do
     put $ DTMC (m dtmc) (multStd2 (v dtmc) (m dtmc))
     v <$> get
 
-nIter :: Int -> State DTMC (Matrix Double)
+nIter :: Int -> StateT DTMC IO()
 nIter n
-    | n == 0 = v <$> get
+    | n == 0 = do
+        dtmc <- get
+        liftIO $ print (v dtmc)
     | otherwise = do
-        iter
+        dtmc <- fmap (runState iter) get
+        put (snd dtmc)
         nIter (n-1)
 
-testIter :: StateT DTMC IO ()
-testIter = do
-    dtmc <- get
-    put $ DTMC (m dtmc) (multStd2 (v dtmc) (m dtmc))
-    liftIO $ print (v dtmc)
 
 vIter :: Int -> StateT DTMC IO()
 vIter n
@@ -125,22 +123,24 @@ vIter n
 main = do
     setLocaleEncoding utf8
     putStrLn "Enter the name of DTMC file"
-    file <- getLine 
+    file <- getLine
     contents <- DB.readFile file
     putStrLn "How many iterations do you want to run?"
     n <- getLine
     putStrLn "Enable verbose output? (y/N)"
     v <- getChar
     let dtmc = parseOnly dtmcParse contents
-    
+
     if v == 'y' then do
         either
             (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC")
-            (\msg -> evalStateT (vIter 10) testDTMC)
+            (evalStateT (vIter (read n)))
             dtmc
     else do
-        print $ evalStateT (nIter 10) testDTMC
-
+        either
+            (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC")
+            (evalStateT (nIter (read n)))
+            dtmc
 
 ---------------------Comments regarding the input format----------------------------
 -- required file format:
