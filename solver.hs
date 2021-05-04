@@ -1,6 +1,8 @@
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
 
+-- Input format differs from that given in the course; indices start at 1 instead of 0. More details at end of this file
+
 import Data.Matrix
     ( fromLists, getRow, multStd2, setElem, zero, Matrix(nrows) )
 import qualified Data.Vector as V
