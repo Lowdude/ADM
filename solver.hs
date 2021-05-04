@@ -58,18 +58,6 @@ transParse = do
     endOfLine
     return $ Transition start end prob
 
----------------------Teststructures-------------------------------------------------
-testVector = fromLists [[0,0,1,0,0]]
-testMatrix = fromLists [[1,0,0,0,0],[0.5,0,0.5,0,0],[0,0.5,0,0.5,0],[0,0,0.5,0,0.5],[0,0,0,0,1]]
-testDTMC = DTMC testMatrix testVector
-
-testCall :: Int -> IO ()
-testCall n
-    | n == 0 = putStrLn "this is a test string"
-    | otherwise = do
-        putStrLn "this is another test string"
-        testCall (n-1)
-
 ---------------------Building DTMC from parsed contents-----------------------------
 buildDTMC :: Int -> Int -> [Transition] -> DTMC
 buildDTMC n s trans = DTMC (buildMatrix n trans) (buildVector n s)
