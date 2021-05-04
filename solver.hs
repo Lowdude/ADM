@@ -8,6 +8,7 @@ import GHC.IO.Encoding
 import Data.Attoparsec.ByteString.Char8 as AP
 import qualified Data.ByteString as DB
 import Debug.Trace as DT
+import Data.Either
 
 ---------------------Data constructors----------------------------------------------
 data DTMC = DTMC {
@@ -16,8 +17,8 @@ data DTMC = DTMC {
 }
 
 data Transition = Transition {
-    start :: Int 
-    , end :: Int 
+    start :: Int
+    , end :: Int
     , prob :: Double
 }
 
@@ -27,21 +28,21 @@ instance Show DTMC where
 ---------------------Parsing--------------------------------------------------------
 dtmcParse :: Parser DTMC
 dtmcParse = do
-    states <- decimal 
-    endOfLine 
-    initState <- decimal 
-    endOfLine 
-    listOfTransitions <- manyTill transParse endOfInput 
+    states <- decimal
+    endOfLine
+    initState <- decimal
+    endOfLine
+    listOfTransitions <- manyTill transParse endOfInput
     return $ buildDTMC states initState listOfTransitions
 
 transParse :: Parser Transition
 transParse = do
-    start <- decimal 
+    start <- decimal
     space
-    end <- decimal 
+    end <- decimal
     space
-    prob <- double 
-    endOfLine 
+    prob <- double
+    endOfLine
     return $ Transition start end prob
 
 ---------------------Teststructures-------------------------------------------------
@@ -98,14 +99,14 @@ testIter = do
 
 vIter :: Int -> StateT DTMC IO()
 vIter n
-    | DT.trace ("n==0 comparison, n is currently: " ++ show n ++ ".\n") (n == 0) = do
+    | n == 0 = do
         dtmc <- get
         liftIO $ print (v dtmc)
     | otherwise = do
         dtmc <- fmap (runState iter) get
         put (snd dtmc)
-        DT.trace "Here, the current value of dtmc should be displayed:" (liftIO $ print dtmc)
-        DT.trace ("vIter is called recursively with " ++ show (n-1) ++ ".\n") (vIter (n-1))
+        liftIO $ print dtmc
+        vIter (n-1)
 
 ---------------------Main-----------------------------------------------------------
 main = do
@@ -117,13 +118,24 @@ main = do
     -- n <- getLine
     --putStrLn "Enable verbose output? (y/N)"
     --v <- getChar
-    contents <- DB.readFile "example.txt"
+    contents <- DB.readFile "unfairGamble.txt"
     let dtmc = parseOnly dtmcParse contents
-    --return $ runStateT (vIter 10) testDTMC
-    return $ fmap (runStateT (vIter 10)) dtmc
+    --runStateT (vIter 10) testDTMC
+    --print $ fmap (runStateT (vIter 10)) dtmc
+    --runStateT (vIter 10) testDTMC
+    either
+        (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC")
+        (\msg -> evalStateT (vIter 10) testDTMC)
+        dtmc
+    
+    -- case fmap (runStateT (vIter 10)) dtmc of
+    --     Left err -> putStrLn "There was an issue with the input file: Not a valid DTMC"
+    --     Right msg -> print $ runStateT (vIter 10) (Right msg)
+
+    --runStateT (vIter 10) (fromRight testDTMC dtmc)
     --return $ fmap (runStateT testIter) dtmc
     --return $ fmap (nIterV 0 10) dtmc
-    
+
     --return $ fmap (nIterV 0 (read n)) (parseOnly dtmcParse contents)
     -- if v == 'y' then do
     --     return $ fmap (nIterV (read n)) (parseOnly dtmcParse contents)
