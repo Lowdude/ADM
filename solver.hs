@@ -121,7 +121,7 @@ main = do
 
     if v == 'y' then do
         either
-            (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC")
+            (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC. Did you remember to end the input file with a newline character?")
             (evalStateT (vIter (read n)))
             dtmc
     else do
