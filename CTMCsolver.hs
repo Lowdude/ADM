@@ -10,58 +10,56 @@ import GHC.IO.Encoding ( setLocaleEncoding, utf8 )
 import Data.Attoparsec.ByteString.Char8 as AP
 import qualified Data.ByteString as DB
 import MCParser
+import MCSolver
 
----------------------Calculating n steps of DTMC------------------------------------
-iter :: State DTMC (Matrix Double)
+---------------------Calculating n steps of CTMC------------------------------------
+iter :: State CTMC (Matrix Double)
 iter = do
-    dtmc <- get
-    put $ DTMC (dtmc_matrix dtmc) (multStd2 (dtmc_vector dtmc) (dtmc_matrix dtmc))
-    dtmc_vector <$> get
+    ctmc <- get
+    put $ CTMC (ctmc_matrix ctmc) (multStd2 (ctmc_vector ctmc) (ctmc_matrix ctmc))
+    ctmc_vector <$> get
 
-nIter :: Int -> StateT DTMC IO()
+nIter :: Int -> StateT CTMC IO()
 nIter n
     | n == 0 = do
-        dtmc <- get
-        liftIO $ print (dtmc_vector dtmc)
+        ctmc <- get
+        liftIO $ print (ctmc_vector ctmc)
     | otherwise = do
-        dtmc <- fmap (runState iter) get
-        put (snd dtmc)
+        ctmc <- fmap (runState iter) get
+        put (snd ctmc)
         nIter (n-1)
 
 
-vIter :: Int -> StateT DTMC IO()
+vIter :: Int -> StateT CTMC IO()
 vIter n
     | n == 0 = do
-        dtmc <- get
-        liftIO $ print (dtmc_vector dtmc)
+        ctmc <- get
+        liftIO $ print (ctmc_vector ctmc)
     | otherwise = do
-        dtmc <- fmap (runState iter) get
-        put (snd dtmc)
-        liftIO $ print (dtmc_vector (snd dtmc))
+        ctmc <- fmap (runState iter) get
+        put (snd ctmc)
+        liftIO $ print (ctmc_vector (snd ctmc))
         vIter (n-1)
 
 ---------------------Main-----------------------------------------------------------
 main = do
     setLocaleEncoding utf8
-    -- putStrLn "Enter the name of CTMC file"
-    -- file <- getLine
-    -- contents <- DB.readFile file
-    -- putStrLn "How many iterations do you want to run?"
-    -- n <- getLine
-    -- putStrLn "Enable verbose output? (y/N)"
-    -- dtmc_vector <- getChar
-    -- let dtmc = parseOnly dtmcParse contents
+    putStrLn "Enter the name of CTMC file"
+    file <- getLine
+    contents <- DB.readFile file
+    putStrLn "How many iterations do you want to run?"
+    n <- getLine
+    putStrLn "Enable verbose output? (y/N)"
+    ctmc_vector <- getChar
+    let ctmc = parseOnly ctmcParse contents
 
-    -- if dtmc_vector == 'y' then do
-    --     either
-    --         (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC. Did you remember to end the input file with a newline character?")
-    --         (evalStateT (vIter (read n)))
-    --         dtmc
-    -- else do
-    --     either
-    --         (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC")
-    --         (evalStateT (nIter (read n)))
-    --         dtmc
-
-    contents <- DB.readFile "example.ctmc"
-    print $ parseOnly ctmcParse contents
+    if ctmc_vector == 'y' then do
+        either
+            (\err -> putStrLn "There was an issue with the input file: Not a valid CTMC. Did you remember to end the input file with a newline character?")
+            (evalStateT (vIter (read n)))
+            ctmc
+    else do
+        either
+            (\err -> putStrLn "There was an issue with the input file: Not a valid CTMC")
+            (evalStateT (nIter (read n)))
+            ctmc

@@ -16,35 +16,7 @@ import GHC.IO.Encoding ( setLocaleEncoding, utf8 )
 import Data.Attoparsec.ByteString.Char8 as AP ( parseOnly )
 import qualified Data.ByteString as DB
 import MCParser ( DTMC(..), dtmcParse, compDTMCParse )
-
----------------------Calculating n steps of DTMC------------------------------------
-iter :: State DTMC (Matrix Double)
-iter = do
-    dtmc <- get
-    put $ DTMC (dtmc_matrix dtmc) (multStd2 (dtmc_vector dtmc) (dtmc_matrix dtmc))
-    dtmc_vector <$> get
-
-nIter :: Int -> StateT DTMC IO()
-nIter n
-    | n == 0 = do
-        dtmc <- get
-        liftIO $ print (dtmc_vector dtmc)
-    | otherwise = do
-        dtmc <- fmap (runState iter) get
-        put (snd dtmc)
-        nIter (n-1)
-
-
-vIter :: Int -> StateT DTMC IO()
-vIter n
-    | n == 0 = do
-        dtmc <- get
-        liftIO $ print (dtmc_vector dtmc)
-    | otherwise = do
-        dtmc <- fmap (runState iter) get
-        put (snd dtmc)
-        liftIO $ print (dtmc_vector (snd dtmc))
-        vIter (n-1)
+import MCSolver ( dtmcSolver, dtmcSolverVerbose )
 
 ---------------------Main-----------------------------------------------------------
 main = do
@@ -63,10 +35,10 @@ main = do
     if dtmc_vector == 'y' then do
         either
             (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC.")
-            (evalStateT (vIter (read n)))
+            (evalStateT (dtmcSolverVerbose (read n)))
             dtmc
     else do
         either
             (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC")
-            (evalStateT (nIter (read n)))
+            (evalStateT (dtmcSolver (read n)))
             dtmc

@@ -1,4 +1,4 @@
-module MCParser (DTMC(..),dtmcParse,compDTMCParse,ctmcParse) where
+module MCParser (DTMC(..),CTMC(..),dtmcParse,compDTMCParse,ctmcParse,compCTMCParse) where
 
 import Data.Matrix ( getRow, setElem, zero, Matrix(nrows) )
 import qualified Data.Vector as V
