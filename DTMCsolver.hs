@@ -70,12 +70,3 @@ main = do
             (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC")
             (evalStateT (nIter (read n)))
             dtmc
-
----------------------Comments regarding the input format----------------------------
--- required file format:
--- numberOfStates
--- initialState
--- s1 e1 p1 # where s1 is the outgoing node, e1 is the ingoing node and p1 is the associated probability 
--- s2 e2 p2
--- ... 
--- # Nodes are numbered from 1 to n
