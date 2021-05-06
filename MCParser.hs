@@ -1,4 +1,4 @@
-module MCParser (DTMC(..),dtmcParse,compDTMCParse) where
+module MCParser (DTMC(..),dtmcParse,compDTMCParse,ctmcParse) where
 
 import Data.Matrix ( getRow, setElem, zero, Matrix(nrows) )
 import qualified Data.Vector as V
@@ -57,6 +57,15 @@ compDTMCParse = do
     listOfTransitions <- sepBy _transParse endOfLine
     return $ _buildDTMC states 1 (fmap _compatTrans listOfTransitions)
 
+compCTMCParse :: Parser CTMC
+compCTMCParse = do
+    states <- decimal
+    endOfLine
+    decimal -- number of transitions not required in advance, so it will be disregarded
+    endOfLine
+    listOfTransitions <- sepBy _transParse endOfLine
+    return $ _buildCTMC states 1 (fmap _compatTrans listOfTransitions)
+
 _transParse :: Parser Transition
 _transParse = do
     start <- decimal
@@ -65,7 +74,7 @@ _transParse = do
     skipMany space
     Transition start end <$> double
 
----------------------Building DTMC from parsed contents-----------------------------
+---------------------Build helpers from parsed contents-----------------------------
 _buildDTMC :: Int -> Int -> [Transition] -> DTMC
 _buildDTMC n s t = DTMC (_normaliseDTMC 1 $ _buildMatrix (zero n n) t) (_buildVector n s)
 
@@ -89,7 +98,7 @@ _normaliseDTMC n dtmc_matrix
 _normaliseCTMC :: Num a => Int -> Matrix a -> Matrix a
 _normaliseCTMC n ctmc_matrix
     | n > nrows ctmc_matrix = ctmc_matrix
-    | otherwise = _normaliseDTMC (n+1) $ setElem (- V.sum (getRow n ctmc_matrix)) (n,n) ctmc_matrix
+    | otherwise = _normaliseCTMC (n+1) $ setElem (- V.sum (getRow n ctmc_matrix)) (n,n) ctmc_matrix
 
 ---------------------Compatibility functions----------------------------------------
 

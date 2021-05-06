@@ -43,22 +43,25 @@ vIter n
 ---------------------Main-----------------------------------------------------------
 main = do
     setLocaleEncoding utf8
-    putStrLn "Enter the name of DTMC file"
-    file <- getLine
-    contents <- DB.readFile file
-    putStrLn "How many iterations do you want to run?"
-    n <- getLine
-    putStrLn "Enable verbose output? (y/N)"
-    dtmc_vector <- getChar
-    let dtmc = parseOnly dtmcParse contents
+    -- putStrLn "Enter the name of CTMC file"
+    -- file <- getLine
+    -- contents <- DB.readFile file
+    -- putStrLn "How many iterations do you want to run?"
+    -- n <- getLine
+    -- putStrLn "Enable verbose output? (y/N)"
+    -- dtmc_vector <- getChar
+    -- let dtmc = parseOnly dtmcParse contents
 
-    if dtmc_vector == 'y' then do
-        either
-            (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC. Did you remember to end the input file with a newline character?")
-            (evalStateT (vIter (read n)))
-            dtmc
-    else do
-        either
-            (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC")
-            (evalStateT (nIter (read n)))
-            dtmc
+    -- if dtmc_vector == 'y' then do
+    --     either
+    --         (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC. Did you remember to end the input file with a newline character?")
+    --         (evalStateT (vIter (read n)))
+    --         dtmc
+    -- else do
+    --     either
+    --         (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC")
+    --         (evalStateT (nIter (read n)))
+    --         dtmc
+
+    contents <- DB.readFile "example.ctmc"
+    print $ parseOnly ctmcParse contents
