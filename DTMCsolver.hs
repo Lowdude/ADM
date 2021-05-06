@@ -3,19 +3,11 @@
 
 -- Input format differs from that given in the course; indices start at 1 instead of 0. More details at end of this file
 
-import Data.Matrix ( multStd2, Matrix )
-import qualified Data.Vector as V
-import Control.Monad.State.Lazy
-    ( evalStateT,
-      runState,
-      MonadIO(liftIO),
-      MonadState(put, get),
-      State,
-      StateT )
+import Control.Monad.State.Lazy ( evalStateT )
 import GHC.IO.Encoding ( setLocaleEncoding, utf8 )
 import Data.Attoparsec.ByteString.Char8 as AP ( parseOnly )
 import qualified Data.ByteString as DB
-import MCParser ( DTMC(..), dtmcParse, compDTMCParse )
+import MCParser ( dtmcParse )
 import MCSolver ( dtmcSolver, dtmcSolverVerbose )
 
 ---------------------Main-----------------------------------------------------------
@@ -39,6 +31,6 @@ main = do
             dtmc
     else do
         either
-            (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC")
+            (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC.")
             (evalStateT (dtmcSolver (read n)))
             dtmc

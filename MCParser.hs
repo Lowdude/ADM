@@ -1,6 +1,6 @@
 module MCParser (DTMC(..),CTMC(..),dtmcParse,compDTMCParse,ctmcParse,compCTMCParse) where
 
-import Data.Matrix ( getRow, setElem, zero, Matrix(nrows) )
+import Data.Matrix ( getRow, setElem, zero, Matrix (nrows) )
 import qualified Data.Vector as V
 import Data.Attoparsec.ByteString.Char8 as AP
     ( decimal, double, space, endOfLine, sepBy, Parser, skipMany )

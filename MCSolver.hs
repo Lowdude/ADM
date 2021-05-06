@@ -1,8 +1,10 @@
-module MCSolver (dtmcSolver, dtmcSolverVerbose) where
-import MCParser
-import Data.Matrix ( multStd2, Matrix )
+module MCSolver (dtmcSolver, dtmcSolverVerbose, discretise) where
+import MCParser ( DTMC(..), CTMC(..) )
+import Data.Matrix
+    ( identity, multStd2, scaleMatrix, Matrix(nrows) )
 import qualified Data.Vector as V
 import Control.Monad.State.Lazy
+    ( MonadIO(liftIO), StateT, MonadState(put, get), runState, State )
 
 
 _iter :: State DTMC (Matrix Double)
@@ -32,3 +34,9 @@ dtmcSolverVerbose n
         put (snd dtmc)
         liftIO $ print (dtmc_vector (snd dtmc))
         dtmcSolverVerbose (n-1)
+
+discretise :: Double -> CTMC -> DTMC
+discretise x ctmc = DTMC (identity (nrows m) + scaleMatrix x m)(ctmc_vector ctmc) where m = ctmc_matrix ctmc
+
+invDiscretise :: Double -> DTMC -> CTMC
+invDiscretise x dtmc = CTMC (scaleMatrix (1/x) (m - identity (nrows m))) (dtmc_vector dtmc) where m = dtmc_matrix dtmc
