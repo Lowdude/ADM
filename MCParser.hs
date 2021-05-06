@@ -3,7 +3,7 @@ module MCParser (DTMC(..),dtmcParse,compDTMCParse) where
 import Data.Matrix ( getRow, setElem, zero, Matrix(nrows) )
 import qualified Data.Vector as V
 import Data.Attoparsec.ByteString.Char8 as AP
-    ( decimal, double, space, endOfLine, manyTill, endOfInput, Parser )
+    ( decimal, double, space, endOfLine, sepBy, Parser )
 import qualified Data.ByteString as DB
 
 ---------------------Data constructors----------------------------------------------
@@ -28,7 +28,7 @@ dtmcParse = do
     endOfLine
     initState <- decimal
     endOfLine
-    listOfTransitions <- manyTill _transParse endOfInput
+    listOfTransitions <- sepBy _transParse endOfLine
     return $ _buildDTMC states initState listOfTransitions
 
 compDTMCParse :: Parser DTMC
@@ -37,7 +37,7 @@ compDTMCParse = do
     endOfLine
     decimal -- number of transitions not required in advance, so it will be disregarded
     endOfLine
-    listOfTransitions <- manyTill _transParse endOfInput
+    listOfTransitions <- sepBy _transParse endOfLine
     return $ _buildDTMC states 1 (fmap _compatTrans listOfTransitions)
 
 _transParse :: Parser Transition
@@ -46,9 +46,7 @@ _transParse = do
     space
     end <- decimal
     space
-    prob <- double
-    endOfLine
-    return $ Transition start end prob
+    Transition start end <$> double
 
 ---------------------Building DTMC from parsed contents-----------------------------
 _buildDTMC :: Int -> Int -> [Transition] -> DTMC
