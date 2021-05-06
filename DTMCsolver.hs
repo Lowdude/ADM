@@ -5,7 +5,7 @@ import Control.Monad.State.Lazy ( evalStateT )
 import GHC.IO.Encoding ( setLocaleEncoding, utf8 )
 import Data.Attoparsec.ByteString.Char8 as AP ( parseOnly )
 import qualified Data.ByteString as DB
-import MCParser ( dtmcParse )
+import MCParser ( dtmcParse, dtmc_matrix )
 import MCSolver ( dtmcSolver, dtmcSolverVerbose )
 
 ---------------------Main-----------------------------------------------------------
@@ -20,15 +20,17 @@ main = do
     dtmc_vector <- getChar
     let dtmc = parseOnly dtmcParse contents
     --Uncomment for compatibility mode:
-    --let dtmc = parseOnly compDTMCParse contents    
+    --let dtmc = parseOnly compDTMCParse contents
 
     if dtmc_vector == 'y' then do
+        putStrLn "Probability matrix:"
+        print (fmap dtmc_matrix dtmc)
         either
             (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC.")
-            (evalStateT (dtmcSolverVerbose (read n)))
+            (evalStateT (dtmcSolverVerbose (read n - 1)))
             dtmc
     else do
         either
             (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC.")
-            (evalStateT (dtmcSolver (read n)))
+            (evalStateT (dtmcSolver (read n - 1)))
             dtmc

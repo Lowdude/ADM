@@ -26,7 +26,7 @@ dtmcSolverVerbose :: Int -> StateT DTMC IO()
 dtmcSolverVerbose n
     | n == 0 = do
         dtmc <- get
-        liftIO $ print (dtmc_vector dtmc)
+        liftIO $ putStrLn "Finished"
     | otherwise = do
         dtmc <- fmap (runState _iter) get
         put (snd dtmc)
