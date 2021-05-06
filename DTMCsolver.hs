@@ -21,14 +21,14 @@ import MCParser ( DTMC(..), dtmcParse, compDTMCParse )
 iter :: State DTMC (Matrix Double)
 iter = do
     dtmc <- get
-    put $ DTMC (m dtmc) (multStd2 (v dtmc) (m dtmc))
-    v <$> get
+    put $ DTMC (dtmc_matrix dtmc) (multStd2 (dtmc_vector dtmc) (dtmc_matrix dtmc))
+    dtmc_vector <$> get
 
 nIter :: Int -> StateT DTMC IO()
 nIter n
     | n == 0 = do
         dtmc <- get
-        liftIO $ print (v dtmc)
+        liftIO $ print (dtmc_vector dtmc)
     | otherwise = do
         dtmc <- fmap (runState iter) get
         put (snd dtmc)
@@ -39,11 +39,11 @@ vIter :: Int -> StateT DTMC IO()
 vIter n
     | n == 0 = do
         dtmc <- get
-        liftIO $ print (v dtmc)
+        liftIO $ print (dtmc_vector dtmc)
     | otherwise = do
         dtmc <- fmap (runState iter) get
         put (snd dtmc)
-        liftIO $ print (v (snd dtmc))
+        liftIO $ print (dtmc_vector (snd dtmc))
         vIter (n-1)
 
 ---------------------Main-----------------------------------------------------------
@@ -55,12 +55,12 @@ main = do
     putStrLn "How many iterations do you want to run?"
     n <- getLine
     putStrLn "Enable verbose output? (y/N)"
-    v <- getChar
+    dtmc_vector <- getChar
     let dtmc = parseOnly dtmcParse contents
     --Uncomment for compatibility mode:
     --let dtmc = parseOnly compDTMCParse contents    
 
-    if v == 'y' then do
+    if dtmc_vector == 'y' then do
         either
             (\err -> putStrLn "There was an issue with the input file: Not a valid DTMC.")
             (evalStateT (vIter (read n)))
