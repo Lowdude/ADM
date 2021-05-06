@@ -1,4 +1,4 @@
-module MCParser (DTMC(..),Transition,dtmcParse) where
+module MCParser (DTMC(..),dtmcParse,compDTMCParse) where
 
 import Data.Matrix ( getRow, setElem, zero, Matrix(nrows) )
 import qualified Data.Vector as V
@@ -28,11 +28,20 @@ dtmcParse = do
     endOfLine
     initState <- decimal
     endOfLine
-    listOfTransitions <- manyTill transParse endOfInput
-    return $ buildDTMC states initState listOfTransitions
+    listOfTransitions <- manyTill _transParse endOfInput
+    return $ _buildDTMC states initState listOfTransitions
 
-transParse :: Parser Transition
-transParse = do
+compDTMCParse :: Parser DTMC
+compDTMCParse = do
+    states <- decimal
+    endOfLine
+    decimal -- number of transitions not required in advance, so it will be disregarded
+    endOfLine
+    listOfTransitions <- manyTill _transParse endOfInput
+    return $ _buildDTMC states 1 (fmap _compatTrans listOfTransitions)
+
+_transParse :: Parser Transition
+_transParse = do
     start <- decimal
     space
     end <- decimal
@@ -42,21 +51,26 @@ transParse = do
     return $ Transition start end prob
 
 ---------------------Building DTMC from parsed contents-----------------------------
-buildDTMC :: Int -> Int -> [Transition] -> DTMC
-buildDTMC n s trans = DTMC (buildMatrix n trans) (buildVector n s)
+_buildDTMC :: Int -> Int -> [Transition] -> DTMC
+_buildDTMC n s trans = DTMC (_buildMatrix n trans) (_buildVector n s)
 
-buildVector :: Int -> Int -> Matrix Double
-buildVector numberOfStates startingNode = setElem 1 (1,startingNode) (zero 1 numberOfStates)
+_buildVector :: Int -> Int -> Matrix Double
+_buildVector numberOfStates startingNode = setElem 1 (1,startingNode) (zero 1 numberOfStates)
 
-buildMatrix :: Int -> [Transition] -> Matrix Double
-buildMatrix n t = normalise 1 $ _buildHelper (zero n n) t
+_buildMatrix :: Int -> [Transition] -> Matrix Double
+_buildMatrix n t = _normalise 1 $ _buildHelper (zero n n) t
 
 _buildHelper :: Matrix Double -> [Transition] -> Matrix Double
 _buildHelper m t
     | null t = m
     | otherwise = setElem (prob t1) (start t1,end t1) (_buildHelper m (tail t)) where t1 = head t
 
-normalise :: Num a => Int -> Matrix a -> Matrix a
-normalise n m
+_normalise :: Num a => Int -> Matrix a -> Matrix a
+_normalise n m
     | n > nrows m = m
-    | otherwise = normalise (n+1) $ setElem (1 - V.sum (getRow n m)) (n,n) m
+    | otherwise = _normalise (n+1) $ setElem (1 - V.sum (getRow n m)) (n,n) m
+
+---------------------Compatibility functions----------------------------------------
+
+_compatTrans :: Transition -> Transition -- shifting indices to start from 1 instead of 0
+_compatTrans t = Transition (start t + 1) (end t + 1) (prob t)
