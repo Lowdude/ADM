@@ -6,7 +6,6 @@ import qualified Data.Vector as V
 import Control.Monad.State.Lazy
     ( MonadIO(liftIO), StateT, MonadState(put, get), runState, State )
 
-
 _iter :: State DTMC (Matrix Double)
 _iter = do
     dtmc <- get
@@ -23,7 +22,6 @@ dtmcSolver n
         put (snd dtmc)
         dtmcSolver (n-1)
 
-
 dtmcSolverVerbose :: Int -> StateT DTMC IO()
 dtmcSolverVerbose n
     | n == 0 = do
@@ -37,6 +35,3 @@ dtmcSolverVerbose n
 
 discretise :: Double -> CTMC -> DTMC
 discretise x ctmc = DTMC (identity (nrows m) + scaleMatrix x m)(ctmc_vector ctmc) where m = ctmc_matrix ctmc
-
-invDiscretise :: Double -> DTMC -> CTMC
-invDiscretise x dtmc = CTMC (scaleMatrix (1/x) (m - identity (nrows m))) (dtmc_vector dtmc) where m = dtmc_matrix dtmc
