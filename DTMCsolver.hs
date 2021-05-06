@@ -3,8 +3,7 @@
 
 -- Input format differs from that given in the course; indices start at 1 instead of 0. More details at end of this file
 
-import Data.Matrix
-    ( fromLists, getRow, multStd2, setElem, zero, Matrix(nrows) )
+import Data.Matrix ( multStd2, Matrix )
 import qualified Data.Vector as V
 import Control.Monad.State.Lazy
     ( evalStateT,
@@ -14,17 +13,9 @@ import Control.Monad.State.Lazy
       State,
       StateT )
 import GHC.IO.Encoding ( setLocaleEncoding, utf8 )
-import Data.Attoparsec.ByteString.Char8 as AP
-    ( decimal,
-      double,
-      space,
-      endOfLine,
-      parseOnly,
-      manyTill,
-      endOfInput,
-      Parser )
+import Data.Attoparsec.ByteString.Char8 as AP ( parseOnly )
 import qualified Data.ByteString as DB
-import MCParser ( DTMC(..), dtmcParse )
+import MCParser ( DTMC(..), dtmcParse, compDTMCParse )
 
 ---------------------Calculating n steps of DTMC------------------------------------
 iter :: State DTMC (Matrix Double)
@@ -66,6 +57,8 @@ main = do
     putStrLn "Enable verbose output? (y/N)"
     v <- getChar
     let dtmc = parseOnly dtmcParse contents
+    --Uncomment for compatibility mode:
+    --let dtmc = parseOnly compDTMCParse contents    
 
     if v == 'y' then do
         either
