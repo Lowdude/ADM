@@ -1,8 +1,6 @@
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
 
--- Input format differs from that given in the course; indices start at 1 instead of 0. More details at end of this file
-
 import Control.Monad.State.Lazy ( evalStateT )
 import GHC.IO.Encoding ( setLocaleEncoding, utf8 )
 import Data.Attoparsec.ByteString.Char8 as AP ( parseOnly )
@@ -27,7 +25,6 @@ main = do
     if ctmc_vector == 'y' then do
         either
             (\err -> putStrLn "There was an issue with the input file: Not a valid CTMC.")
-            --(print <$> discretise 0.2)
             (evalStateT (dtmcSolverVerbose (read n)) <$> discretise (read l))
             ctmc
     else do

@@ -1,8 +1,6 @@
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
 
--- Input format differs from that given in the course; indices start at 1 instead of 0. More details at end of this file
-
 import Control.Monad.State.Lazy ( evalStateT )
 import GHC.IO.Encoding ( setLocaleEncoding, utf8 )
 import Data.Attoparsec.ByteString.Char8 as AP ( parseOnly )
