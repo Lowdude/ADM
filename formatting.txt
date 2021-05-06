@@ -1,0 +1,18 @@
+---------------------Comments regarding the input format----------------------------
+
+---------------------default file format for DTMCs----------------------------------
+
+numberOfStates
+initialState
+s1 e1 p1 # where s1 is the outgoing node, e1 is the ingoing node and p1 is the associated probability 
+s2 e2 p2
+... 
+# Nodes are numbered from 1 to n
+
+---------------------compatibility file format for DTMCs----------------------------
+numberOfStates
+numberOfTransitions # or a random number, as this line is just discarded by the parser
+s1 e1 p1 # where s1 is the outgoing node, e1 is the ingoing node and p1 is the associated probability 
+s2 e2 p2
+... 
+# Nodes are numbered from 0 to n
