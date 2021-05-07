@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import Control.Monad.State.Lazy ( evalStateT )
-import GHC.IO.Encoding ( setLocaleEncoding, utf8 )
 import Data.Attoparsec.ByteString.Char8 as AP ( parseOnly )
 import qualified Data.ByteString as DB
 import MCParser ( dtmcParse, dtmc_matrix )

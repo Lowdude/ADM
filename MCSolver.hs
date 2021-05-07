@@ -1,6 +1,7 @@
 module MCSolver (dtmcSolver, dtmcSolverVerbose, discretise) where
 import MCParser ( DTMC(..), CTMC(..) )
 import Numeric.LinearAlgebra as NL
+    ( (<#), asRow, rows, ident, disp, Linear(scale), Vector )
 import qualified Data.Vector as V
 import Control.Monad.State.Lazy
     ( MonadIO(liftIO), StateT, MonadState(put, get), runState, State )
