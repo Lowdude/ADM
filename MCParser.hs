@@ -1,33 +1,30 @@
-module MCParser (DTMC(..),CTMC(..),dtmcParse,compDTMCParse,ctmcParse,compCTMCParse) where
-
-import Data.Matrix ( getRow, setElem, zero, Matrix (nrows) )
+module MCParser where
+--(DTMC(..),CTMC(..),dtmcParse,compDTMCParse,ctmcParse,compCTMCParse)
+import Numeric.LinearAlgebra as NL
+--import qualified Numeric.LinearAlgebra.Data as NLD
 import qualified Data.Vector as V
 import Data.Attoparsec.ByteString.Char8 as AP
-    ( decimal, double, space, endOfLine, sepBy, Parser, skipMany )
+    ( decimal, double, space, endOfLine, sepBy, Parser, skipMany1 )
 import qualified Data.ByteString as DB
 
 ---------------------Data constructors----------------------------------------------
 data DTMC = DTMC {
-    dtmc_matrix :: Matrix Double
-    , dtmc_vector :: Matrix Double
+    dtmc_matrix :: NL.Matrix Double
+    , dtmc_vector :: NL.Vector Double
 }
 
 data CTMC = CTMC {
-    ctmc_matrix :: Matrix Double
-    , ctmc_vector :: Matrix Double
+    ctmc_matrix :: NL.Matrix Double
+    , ctmc_vector :: NL.Vector Double
 }
 
-data Transition = Transition {
-    start :: Int
-    , end :: Int
-    , prob :: Double
-}
+newtype Transition = Transition ((Int,Int),Double)
 
 instance Show DTMC where
-    show (DTMC dtmc_matrix dtmc_vector) = "Probability Matrix:\n" ++ show dtmc_matrix ++ "\n State: \n" ++ show dtmc_vector ++ "\n"
+    show (DTMC dtmc_matrix dtmc_vector) = "Probability NL.Matrix:\n" ++ show dtmc_matrix ++ "\n State: \n" ++ show dtmc_vector ++ "\n"
 
 instance Show CTMC where
-    show (CTMC ctmc_matrix ctmc_vector) = "Probability Matrix:\n" ++ show ctmc_matrix ++ "\n State: \n" ++ show ctmc_vector ++ "\n"
+    show (CTMC ctmc_matrix ctmc_vector) = "Probability NL.Matrix:\n" ++ show ctmc_matrix ++ "\n State: \n" ++ show ctmc_vector ++ "\n"
 
 ---------------------Parsing--------------------------------------------------------
 dtmcParse :: Parser DTMC
@@ -48,59 +45,50 @@ ctmcParse = do
     listOfTransitions <- sepBy _transParse endOfLine
     return $ _buildCTMC states initState listOfTransitions
 
-compDTMCParse :: Parser DTMC
-compDTMCParse = do
-    states <- decimal
-    endOfLine
-    decimal -- number of transitions not required in advance, so it will be disregarded
-    endOfLine
-    listOfTransitions <- sepBy _transParse endOfLine
-    return $ _buildDTMC states 1 (fmap _compatTrans listOfTransitions)
+-- compDTMCParse :: Parser DTMC
+-- compDTMCParse = do
+--     states <- decimal
+--     endOfLine
+--     decimal -- number of transitions not required in advance, so it will be disregarded
+--     endOfLine
+--     listOfTransitions <- sepBy _transParse endOfLine
+--     return $ _buildDTMC states 1 (fmap _compatTrans listOfTransitions)
 
-compCTMCParse :: Parser CTMC
-compCTMCParse = do
-    states <- decimal
-    endOfLine
-    decimal -- number of transitions not required in advance, so it will be disregarded
-    endOfLine
-    listOfTransitions <- sepBy _transParse endOfLine
-    return $ _buildCTMC states 1 (fmap _compatTrans listOfTransitions)
+-- compCTMCParse :: Parser CTMC
+-- compCTMCParse = do
+--     states <- decimal
+--     endOfLine
+--     decimal -- number of transitions not required in advance, so it will be disregarded
+--     endOfLine
+--     listOfTransitions <- sepBy _transParse endOfLine
+--     return $ _buildCTMC states 1 (fmap _compatTrans listOfTransitions)
 
-_transParse :: Parser Transition
+_transParse :: Parser ((Int,Int),Double)
 _transParse = do
     start <- decimal
-    skipMany space
+    skipMany1 space
     end <- decimal
-    skipMany space
-    Transition start end <$> double
+    skipMany1 space
+    prob <- AP.double
+    return ((start, end),prob)
 
 ---------------------Build helpers from parsed contents-----------------------------
-_buildDTMC :: Int -> Int -> [Transition] -> DTMC
-_buildDTMC n s t = DTMC (_normaliseDTMC 1 $ _buildMatrix (zero n n) t) (_buildVector n s)
+_buildDTMC :: Int -> Int -> [((Int,Int),Double)] -> DTMC
+_buildDTMC n s t = DTMC (_normaliseDTMC 1 $ NL.assoc (n,n) 0 t) (_buildVector n s)
 
-_buildCTMC :: Int -> Int -> [Transition] -> CTMC
-_buildCTMC n s t = CTMC (_normaliseCTMC 1 $ _buildMatrix (zero n n) t) (_buildVector n s)
+_buildCTMC :: Int -> Int -> [((Int,Int),Double)] -> CTMC
+_buildCTMC n s t = CTMC (_normaliseCTMC 1 $ NL.assoc (n,n) 0 t) (_buildVector n s)
 
+_buildVector :: Int -> Int -> NL.Vector Double
+_buildVector numberOfStates startingNode = head $ NL.toRows $ NL.assoc (1::Int,numberOfStates) 0 [((1::Int,startingNode),1)]
 
-_buildVector :: Int -> Int -> Matrix Double
-_buildVector numberOfStates startingNode = setElem 1 (1,startingNode) (zero 1 numberOfStates)
+_normaliseDTMC :: Int -> NL.Matrix Double -> NL.Matrix Double
+_normaliseDTMC n m = m + NL.ident (NL.rows m) - NL.diagl (_rowsum m 0)
 
-_buildMatrix :: Matrix Double -> [Transition] -> Matrix Double
-_buildMatrix dtmc_matrix t
-    | null t = dtmc_matrix
-    | otherwise = setElem (prob t1) (start t1,end t1) (_buildMatrix dtmc_matrix (tail t)) where t1 = head t
+_normaliseCTMC :: Int -> NL.Matrix Double -> NL.Matrix Double
+_normaliseCTMC n m = m - NL.diagl (_rowsum m 0)
 
-_normaliseDTMC :: Num a => Int -> Matrix a -> Matrix a
-_normaliseDTMC n dtmc_matrix
-    | n > nrows dtmc_matrix = dtmc_matrix
-    | otherwise = _normaliseDTMC (n+1) $ setElem (1 - V.sum (getRow n dtmc_matrix)) (n,n) dtmc_matrix
-
-_normaliseCTMC :: Num a => Int -> Matrix a -> Matrix a
-_normaliseCTMC n ctmc_matrix
-    | n > nrows ctmc_matrix = ctmc_matrix
-    | otherwise = _normaliseCTMC (n+1) $ setElem (- V.sum (getRow n ctmc_matrix)) (n,n) ctmc_matrix
-
----------------------Compatibility functions----------------------------------------
-
-_compatTrans :: Transition -> Transition -- shifting indices to start from 1 instead of 0
-_compatTrans t = Transition (start t + 1) (end t + 1) (prob t)
+_rowsum :: NL.Matrix Double -> Int -> [Double]
+_rowsum m n
+    | n >= NL.rows m = []
+    | otherwise = NL.sumElements (m ? [n]): _rowsum m (n+1)
