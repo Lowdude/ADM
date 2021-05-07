@@ -1,17 +1,14 @@
-{-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-import Control.Monad.State.Lazy
+import Control.Monad.State.Lazy ( evalStateT )
 import GHC.IO.Encoding ( setLocaleEncoding, utf8 )
 import Data.Attoparsec.ByteString.Char8 as AP ( parseOnly )
 import qualified Data.ByteString as DB
-import Data.Either
 import MCParser ( ctmcParse, CTMC (ctmc_matrix) )
 import MCSolver ( dtmcSolver, dtmcSolverVerbose, discretise )
 
 ---------------------Main-----------------------------------------------------------
 main = do
-    setLocaleEncoding utf8
     putStrLn "Enter the name of CTMC file"
     file <- getLine
     contents <- DB.readFile file
